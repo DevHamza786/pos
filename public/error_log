@@ -1,0 +1,7 @@
+[16-May-2023 14:03:05 UTC] PHP Fatal error:  Uncaught RuntimeException: A facade root has not been set. in /home/magnifystudio/public_html/hotel/vendor/laravel/framework/src/Illuminate/Support/Facades/Facade.php:236
+Stack trace:
+#0 /home/magnifystudio/public_html/hotel/vendor/laravel/framework/src/Illuminate/Foundation/Exceptions/Handler.php(407): Illuminate\Support\Facades\Facade::__callStatic('replaceNamespac...', Array)
+#1 /home/magnifystudio/public_html/hotel/vendor/laravel/framework/src/Illuminate/Foundation/Exceptions/Handler.php(384): Illuminate\Foundation\Exceptions\Handler->registerErrorViewPaths()
+#2 /home/magnifystudio/public_html/hotel/vendor/laravel/framework/src/Illuminate/Foundation/Exceptions/Handler.php(295): Illuminate\Foundation\Exceptions\Handler->renderHttpException(Object(Symfony\Component\HttpKernel\Exception\HttpException))
+#3 /home/magnifystudio/public_html/hotel/vendor/laravel/framework/src/Illuminate/Foundation/Exceptions/Handler.php(192): Illuminate\Foundation\Exceptions\Handler->prepareResponse(Object(Illuminate\Http\Request in /home/magnifystudio/public_html/hotel/vendor/laravel/framework/src/Illuminate/Support/Facades/Facade.php on line 236
+[16-May-2023 14:03:28 UTC] PHP Parse error:  syntax error, unexpected end of file in /home/magnifystudio/public_html/hotel/public/src.php on line 33
