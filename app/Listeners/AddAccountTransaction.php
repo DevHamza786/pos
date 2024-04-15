@@ -2,12 +2,13 @@
 
 namespace App\Listeners;
 
-use App\AccountTransaction;
-
-use App\Events\TransactionPaymentAdded;
+use App\Account;
 
 use App\Utils\ModuleUtil;
+
+use App\AccountTransaction;
 use App\Utils\TransactionUtil;
+use App\Events\TransactionPaymentAdded;
 
 class AddAccountTransaction
 {
@@ -34,7 +35,7 @@ class AddAccountTransaction
      */
     public function handle(TransactionPaymentAdded $event)
     {
-        //echo "<pre>";print_r($event->transactionPayment->toArray());exit;
+        // echo "<pre>";print_r($event->transactionPayment->toArray());exit;
         if ($event->transactionPayment->method == 'advance') {
             $this->transactionUtil->updateContactBalance($event->transactionPayment->payment_for, $event->transactionPayment->amount, 'deduct');
         }
@@ -62,6 +63,20 @@ class AddAccountTransaction
             }
 
             AccountTransaction::createAccountTransaction($account_transaction_data);
+            
+            if($event->formInput['transaction_type'] == 'sell'){
+                $sellTransaction = Account::where('name', 'like', '%sales%')
+                ->whereHas('account_type', function($query) {
+                    $query->where('name', 'sales');
+                })
+                ->first();
+                $account_transaction_data['type'] = 'debit';
+
+                $account_transaction_data['account_id'] = $sellTransaction->id;
+                AccountTransaction::createAccountTransaction($account_transaction_data);
+            }
+
+
         }
     }
 }
