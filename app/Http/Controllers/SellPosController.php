@@ -622,7 +622,6 @@ class SellPosController extends Controller
                             'msg' => $msg
                         ];
         }
-
         if (!$is_direct_sale) {
             return $output;
         } else {
@@ -1331,7 +1330,6 @@ class SellPosController extends Controller
                             'msg' => __('messages.something_went_wrong')
                         ];
         }
-
         if (!$is_direct_sale) {
             return $output;
         } else {

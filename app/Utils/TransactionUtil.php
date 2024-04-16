@@ -767,7 +767,8 @@ class TransactionUtil extends Util
                         'created_by' => empty($user_id) ? auth()->user()->id : $user_id,
                         'payment_for' => $transaction->contact_id,
                         'payment_ref_no' => $payment_ref_no,
-                        'account_id' => !empty($payment['account_id']) && $payment['method'] != 'advance' ? $payment['account_id'] : null
+                        'account_id' => !empty($payment['account_id']) && $payment['method'] != 'advance' ? $payment['account_id'] : null,
+                        // 'total_sell' => $transaction['final_total']
                     ];
 
                     for ($i=1; $i<8; $i++) { 
@@ -775,7 +776,6 @@ class TransactionUtil extends Util
                             $payment_data['transaction_no'] = $payment["transaction_no_{$i}"];
                         }
                     }
-
                     $payments_formatted[] = new TransactionPayment($payment_data);
 
                     if (!empty($payment['denominations'])) {
@@ -812,7 +812,7 @@ class TransactionUtil extends Util
                 $payment = $payment_lines->where('payment_ref_no', $account_transaction['payment_ref_no'])->first();
 
                 if (!empty($payment)) {
-                    event(new TransactionPaymentAdded($payment, $account_transaction));
+                    event(new TransactionPaymentAdded($payment, $account_transaction , $transaction['final_total']));
                 }
             }
 

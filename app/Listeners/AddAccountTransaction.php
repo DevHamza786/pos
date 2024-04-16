@@ -35,6 +35,7 @@ class AddAccountTransaction
      */
     public function handle(TransactionPaymentAdded $event)
     {
+        // dd($event);
         // echo "<pre>";print_r($event->transactionPayment->toArray());exit;
         if ($event->transactionPayment->method == 'advance') {
             $this->transactionUtil->updateContactBalance($event->transactionPayment->payment_for, $event->transactionPayment->amount, 'deduct');
@@ -71,7 +72,9 @@ class AddAccountTransaction
                 })
                 ->first();
                 $account_transaction_data['type'] = 'debit';
-
+                if($event->formInput['amount'] != $event->total_sell){
+                    $account_transaction_data['amount'] = $event->total_sell;
+                }
                 $account_transaction_data['account_id'] = $sellTransaction->id;
                 AccountTransaction::createAccountTransaction($account_transaction_data);
             }

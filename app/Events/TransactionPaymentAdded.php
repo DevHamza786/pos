@@ -11,6 +11,7 @@ class TransactionPaymentAdded
 
     public $transactionPayment;
     public $formInput;
+    public $total_sell;
 
     /**
      * Create a new event instance.
@@ -19,9 +20,10 @@ class TransactionPaymentAdded
      * @param  array $formInput = []
      * @return void
      */
-    public function __construct(TransactionPayment $transactionPayment, $formInput = [])
+    public function __construct(TransactionPayment $transactionPayment, $formInput = [] , $total_sell)
     {
         $this->transactionPayment = $transactionPayment;
         $this->formInput = $formInput;
+        $this->total_sell = $total_sell;
     }
 }

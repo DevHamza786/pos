@@ -262,7 +262,7 @@ class AccountController extends Controller
      * @return Response
      */
     public function show($id)
-    {
+    {  
         if (!auth()->user()->can('account.access')) {
             abort(403, 'Unauthorized action.');
         }
@@ -358,7 +358,6 @@ class AccountController extends Controller
             $account = Account::where('business_id', $business_id)
                         ->with(['account_type', 'account_type.parent_account'])
                         ->findOrFail($id);
-            // dd($account->account_type->name);
             return DataTables::of($accounts)
                         ->editColumn('method', function($row) use ($payment_types) {
                             if (!empty($row->method) && isset($payment_types[$row->method])) {
