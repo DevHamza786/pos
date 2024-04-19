@@ -34,7 +34,6 @@ class UpdateAccountTransaction
         if(!$this->moduleUtil->isModuleEnabled('account')){
             return true;
         }
-
         AccountTransaction::updateAccountTransaction($event->transactionPayment, $event->transactionType);
     }
 }

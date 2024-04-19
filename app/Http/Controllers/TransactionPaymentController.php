@@ -119,16 +119,16 @@ class TransactionPaymentController extends Controller
                 if ($inputs['method'] == 'advance' && $inputs['amount'] > $contact_balance) {
                     throw new AdvanceBalanceNotAvailable(__('lang_v1.required_advance_balance_not_available'));
                 }
-                
+                // dd($inputs);
                 if (!empty($inputs['amount'])) {
                     $tp = TransactionPayment::create($inputs);
-
+        
                     if (!empty($request->input('denominations'))) {
                         $this->transactionUtil->addCashDenominations($tp, $request->input('denominations'));
                     }
 
                     $inputs['transaction_type'] = $transaction->type;
-                    event(new TransactionPaymentAdded($tp, $inputs));
+                    event(new TransactionPaymentAdded($tp, $inputs,null));
                 }
 
                 //update payment status
@@ -157,7 +157,7 @@ class TransactionPaymentController extends Controller
                           'msg' => $msg
                       ];
         }
-
+        dd('hogye payment');
         return redirect()->back()->with(['status' => $output]);
     }
 

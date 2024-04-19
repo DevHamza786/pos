@@ -622,6 +622,7 @@ class SellPosController extends Controller
                             'msg' => $msg
                         ];
         }
+        dd('ok');
         if (!$is_direct_sale) {
             return $output;
         } else {

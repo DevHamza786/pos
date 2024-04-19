@@ -35,17 +35,18 @@ class AddAccountTransaction
      */
     public function handle(TransactionPaymentAdded $event)
     {
-        // dd($event);
         // echo "<pre>";print_r($event->transactionPayment->toArray());exit;
         if ($event->transactionPayment->method == 'advance') {
             $this->transactionUtil->updateContactBalance($event->transactionPayment->payment_for, $event->transactionPayment->amount, 'deduct');
         }
-
+        
         if (!$this->moduleUtil->isModuleEnabled('account', $event->transactionPayment->business_id)) {
             return true;
         }
 
-        // //Create new account transaction
+        $payment_status = $this->transactionUtil->updatePaymentStatus($event->transactionPayment->transaction_id, $event->total_sell);
+
+        //Create new account transaction
         if (!empty($event->formInput['account_id']) && $event->transactionPayment->method != 'advance') {
             $type = !empty($event->transactionPayment->payment_type) ? $event->transactionPayment->payment_type : AccountTransaction::getAccountTransactionType($event->formInput['transaction_type']);
             $account_transaction_data = [
@@ -62,22 +63,42 @@ class AddAccountTransaction
             if ($event->formInput['transaction_type'] == 'sell' && isset($event->formInput['is_return']) && $event->formInput['is_return'] == 1) {
                 $account_transaction_data['type'] = 'debit';
             }
-
             AccountTransaction::createAccountTransaction($account_transaction_data);
             
             if($event->formInput['transaction_type'] == 'sell'){
-                $sellTransaction = Account::where('name', 'like', '%sales%')
+                $sellTransaction = Account::select('id','name')->where('name', 'like', '%sales%')
                 ->whereHas('account_type', function($query) {
                     $query->where('name', 'sales');
                 })
                 ->first();
                 $account_transaction_data['type'] = 'debit';
-                if($event->formInput['amount'] != $event->total_sell){
+                if($event->formInput['amount'] != $event->total_sell && $payment_status == 'partial'){
                     $account_transaction_data['amount'] = $event->total_sell;
                 }
-                $account_transaction_data['account_id'] = $sellTransaction->id;
+
+                if($event->total_sell != null){
+                    $account_transaction_data['account_id'] = $sellTransaction->id;
+                }
+
+                // dd($account_transaction_data);
                 AccountTransaction::createAccountTransaction($account_transaction_data);
+
+                if($payment_status == 'partial'){
+                    $sellTransaction = Account::select('id','name')->where('name', 'like', '%receiable%')
+                    ->whereHas('account_type', function($query) {
+                        $query->where('name', 'assets');
+                    })
+                    ->first();
+                    $account_transaction_data['type'] = 'credit';
+                    $account_transaction_data['amount'] = $event->total_sell - $event->formInput['amount'];
+                    $account_transaction_data['account_id'] = $sellTransaction->id;
+                    AccountTransaction::createAccountTransaction($account_transaction_data);
+                    // dd($account_transaction_data);
+                }else{
+
+                }
             }
+            dd('transaction done hogye han');
 
 
         }

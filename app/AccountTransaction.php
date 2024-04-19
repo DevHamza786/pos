@@ -86,19 +86,22 @@ class AccountTransaction extends Model
      */
     public static function updateAccountTransaction($transaction_payment, $transaction_type)
     {
+        // dd($transaction_payment);
         if (!empty($transaction_payment->account_id)) {
-            $account_transaction = AccountTransaction::where(
+            $account_transactions = AccountTransaction::where(
                 'transaction_payment_id',
                 $transaction_payment->id
-            )
-                    ->first();
-            if (!empty($account_transaction)) {
-                $account_transaction->amount = $transaction_payment->amount;
-                $account_transaction->account_id = $transaction_payment->account_id;
-                $account_transaction->operation_date = $transaction_payment->paid_on;
-                $account_transaction->save();
-                return $account_transaction;
-            } else {
+            )->get();
+            if ($account_transactions->isNotEmpty()) {
+                foreach ($account_transactions as $account_transaction) {
+                    // Update the fields of each account transaction
+                    $account_transaction->amount = $transaction_payment->amount;
+                    $account_transaction->operation_date = $transaction_payment->paid_on;
+                    $account_transaction->save();
+                }
+                return $account_transactions;
+            }
+            else {
                 $accnt_trans_data = [
                     'amount' => $transaction_payment->amount,
                     'account_id' => $transaction_payment->account_id,
