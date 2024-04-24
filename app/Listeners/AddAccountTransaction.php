@@ -37,7 +37,6 @@ class AddAccountTransaction
      */
     public function handle(TransactionPaymentAdded $event)
     {
-        // dd($event);
         // echo "<pre>";
         // print_r($event->transactionPayment->toArray());
         // exit;
@@ -68,30 +67,63 @@ class AddAccountTransaction
             }
             AccountTransaction::createAccountTransaction($account_transaction_data);
             
-            $this->sellAcountTransaction($event);
+            if($event->formInput['transaction_type'] == 'sell'){
 
-            $sellTransaction = Account::select('id', 'name')->where('name', 'like', '%receiable%')
-            ->whereHas('account_type', function ($query) {
-                $query->where('name', 'assets');
-            })
-            ->first();
-            
-            $checkamount = AccountTransaction::where('transaction_id',$event->transactionPayment->transaction_id)
-            ->where('account_id',$sellTransaction->id)
-            ->where('type','credit')
-            ->first();
-
-            $paymentTransaction = TransactionPayment::where('transaction_id',$event->transactionPayment->transaction_id)
-            ->sum('amount');
-            
-            $paid = Transaction::select('id','payment_status','final_total')->where('id',$event->transactionPayment->transaction_id)->first();
-
-            if($paid->payment_status == 'partial' && $checkamount->amount >= $paymentTransaction && $event->total_sell == null){
-                $this-> accountReceiableTransaction($event);               
+                $this->sellAcountTransaction($event);
+    
+                $sellTransaction = Account::select('id', 'name')->where('name', 'like', '%receiable%')
+                ->whereHas('account_type', function ($query) {
+                    $query->where('name', 'assets');
+                })
+                ->first();
+                
+                $checkamount = AccountTransaction::where('transaction_id',$event->transactionPayment->transaction_id)
+                ->where('account_id',$sellTransaction->id)
+                ->where('type','credit')
+                ->first();
+    
+                $paymentTransaction = TransactionPayment::where('transaction_id',$event->transactionPayment->transaction_id)
+                ->sum('amount');
+                
+                $paid = Transaction::select('id','payment_status','final_total')->where('id',$event->transactionPayment->transaction_id)->first();
+    
+                if($paid->payment_status == 'partial' && $checkamount->amount >= $paymentTransaction && $event->total_sell == null){
+                    $this-> accountReceiableTransaction($event);               
+                }
+                if($paid->payment_status == 'paid' && $checkamount->amount <= $paymentTransaction && $event->total_sell == null){
+                    $this-> accountReceiableTransaction($event);               
+                }
             }
-            if($paid->payment_status == 'paid' && $checkamount->amount <= $paymentTransaction && $event->total_sell == null){
-                $this-> accountReceiableTransaction($event);               
+
+            // For Purchase Type
+            if($event->formInput['transaction_type'] == 'purchase'){
+                $this->purchaseAcountTransaction($event);
+
+                $purchaseTransaction = Account::select('id', 'name')->where('name', 'like', '%Payable%')
+                ->whereHas('account_type', function ($query) {
+                    $query->where('name', 'like', '%LIABILITIES%');
+                })
+                ->first();
+                
+                $checkamount = AccountTransaction::where('transaction_id',$event->transactionPayment->transaction_id)
+                ->where('account_id',$purchaseTransaction->id)
+                ->where('type','debit')
+                ->first();
+    
+                $paymentTransaction = TransactionPayment::where('transaction_id',$event->transactionPayment->transaction_id)
+                ->sum('amount');
+                
+                $paid = Transaction::select('id','payment_status','final_total')->where('id',$event->transactionPayment->transaction_id)->first();
+    
+                if($paid->payment_status == 'partial' && $checkamount->amount >= $paymentTransaction && $event->total_sell == null){
+                    $this-> accountPayableTransaction($event);               
+                }
+
+                if($paid->payment_status == 'paid' && $checkamount->amount <= $paymentTransaction && $event->total_sell == null){
+                    $this-> accountPayableTransaction($event);               
+                }
             }
+
 
         }
     }
@@ -152,7 +184,6 @@ class AddAccountTransaction
 
     // For Cash and Account Receiable
     private function accountReceiableTransaction($event){
-        // dd($event);
         $sellTransaction = Account::select('id', 'name')->where('name', 'like', '%receiable%')
         ->whereHas('account_type', function ($query) {
             $query->where('name', 'assets');
@@ -163,6 +194,72 @@ class AddAccountTransaction
                 'amount' => $event->formInput['amount'],
                 'account_id' => $sellTransaction->id,
                 'type' => 'debit',
+                'operation_date' => $event->transactionPayment->paid_on,
+                'created_by' => $event->transactionPayment->created_by,
+                'transaction_id' => $event->transactionPayment->transaction_id,
+                'transaction_payment_id' =>  $event->transactionPayment->id
+            ];
+            AccountTransaction::createAccountTransaction($account_transaction_data);
+        }
+    }
+
+    private function purchaseAcountTransaction($event){
+        // For Purchase Transaction
+        $purchaseTransaction = Account::select('id', 'name')->where('name', 'like', '%Purchase%')
+        ->whereHas('account_type', function ($query) {
+            $query->where('name', 'like', '%assets%');
+        })
+        ->first();
+        $checkpurchasetransaction = AccountTransaction::where('transaction_id',$event->transactionPayment->transaction_id)->where('account_id',$purchaseTransaction->id)->first();
+        if (empty($checkpurchasetransaction)) {
+            $account_transaction_data = [
+                'amount' => $event->total_sell,
+                'account_id' => $purchaseTransaction->id,
+                'type' => 'credit',
+                'operation_date' => $event->transactionPayment->paid_on,
+                'created_by' => $event->transactionPayment->created_by,
+                'transaction_id' => $event->transactionPayment->transaction_id,
+                'transaction_payment_id' =>  $event->transactionPayment->id
+            ];
+            AccountTransaction::createAccountTransaction($account_transaction_data);
+        }
+
+        // For Account Payable Transaction
+        $payment_status = $this->transactionUtil->updatePaymentStatus($event->transactionPayment->transaction_id, $event->total_sell);
+        if ($payment_status == 'partial') {
+            $purchaseTransaction = Account::select('id', 'name')->where('name', 'like', '%Payable%')
+            ->whereHas('account_type', function ($query) {
+                $query->where('name', 'like', '%LIABILITIES%');
+            })
+            ->first();
+            $checkaccounttransaction = AccountTransaction::where('transaction_id',$event->transactionPayment->transaction_id)->where('account_id',$purchaseTransaction->id)->
+            where('type','debit')->first();
+            if(empty($checkaccounttransaction)){
+                $account_transaction_data = [
+                    'amount' => $event->total_sell - $event->formInput['amount'],
+                    'account_id' => $purchaseTransaction->id,
+                    'type' => 'debit',
+                    'operation_date' => $event->transactionPayment->paid_on,
+                    'created_by' => $event->transactionPayment->created_by,
+                    'transaction_id' => $event->transactionPayment->transaction_id,
+                    'transaction_payment_id' =>  $event->transactionPayment->id
+                ];
+                AccountTransaction::createAccountTransaction($account_transaction_data);
+            }
+        }
+    }
+
+    private function accountPayableTransaction($event){
+        $purchaseTransaction = Account::select('id', 'name')->where('name', 'like', '%Payable%')
+        ->whereHas('account_type', function ($query) {
+            $query->where('name', 'like', '%LIABILITIES%');
+        })
+        ->first();
+        if ($event->formInput['transaction_type'] == 'purchase') {
+            $account_transaction_data = [
+                'amount' => $event->formInput['amount'],
+                'account_id' => $purchaseTransaction->id,
+                'type' => 'credit',
                 'operation_date' => $event->transactionPayment->paid_on,
                 'created_by' => $event->transactionPayment->created_by,
                 'transaction_id' => $event->transactionPayment->transaction_id,

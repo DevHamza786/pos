@@ -445,7 +445,7 @@ class PurchaseController extends Controller
                             'msg' => __('messages.something_went_wrong')
                         ];
         }
-
+        dd('ok');
         return redirect('purchases')->with('status', $output);
     }
 
