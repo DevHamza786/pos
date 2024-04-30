@@ -336,7 +336,7 @@ class DataController extends Controller
                 //     ->order(87);
 
                 $menu->url(
-                    '/https://hotel.magnifystudio.com.pk/public/login',
+                    env('HR_URL'),
                     __('essentials::lang.hrm'),
                     ['icon' => 'fa fas fa-users', 'active' => request()->segment(1) == 'hrm', 'style' => config('app.env') == 'demo' ? 'background-color: #605ca8 !important;' : '']
                 )
