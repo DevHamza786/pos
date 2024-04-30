@@ -38,9 +38,10 @@ class DataController extends Controller
                 $transaction_id = $request->get('transaction_id', null);
                 if (!empty($transaction_id)) {
                     $transaction = Transaction::find($transaction_id);
-                    $view_data = ['res_table_id' => $transaction->res_table_id,
-                            'res_waiter_id' => $transaction->res_waiter_id,
-                        ];
+                    $view_data = [
+                        'res_table_id' => $transaction->res_table_id,
+                        'res_waiter_id' => $transaction->res_waiter_id,
+                    ];
                 } else {
                     $view_data = ['res_table_id' => null, 'res_waiter_id' => null];
                 }
@@ -49,6 +50,7 @@ class DataController extends Controller
                 $tables_enabled = false;
                 $waiters = null;
                 $tables = null;
+                $currencySymbol = $request->session()->get('currency.symbol');
                 if ($this->commonUtil->isModuleEnabled('service_staff')) {
                     $waiters_enabled = true;
                     $waiters = $this->commonUtil->serviceStaffDropdown($business_id, $location_id);
@@ -56,8 +58,12 @@ class DataController extends Controller
                 if ($this->commonUtil->isModuleEnabled('tables')) {
                     $tables_enabled = true;
                     $tables = ResTable::where('business_id', $business_id)
-                            ->where('location_id', $location_id)
-                            ->pluck('name', 'id');
+                        ->where('location_id', $location_id)
+                        ->pluck('name', 'id')
+                        ->map(function ($name, $id) use ($currencySymbol) {
+                            $table = ResTable::find($id); // Fetch the ResTable object by ID
+                            return $name . ' - ' . $currencySymbol.' '.$table->charges; // Concatenate name and charges
+                        });
                 }
             } else {
                 $tables = [];
@@ -70,9 +76,8 @@ class DataController extends Controller
             $pos_settings = json_decode($request->session()->get('business.pos_settings'), true);
 
             $is_service_staff_required = (!empty($pos_settings['is_service_staff_required']) && $pos_settings['is_service_staff_required'] == 1) ? true : false;
-
             return view('restaurant.partials.pos_table_dropdown')
-                    ->with(compact('tables', 'waiters', 'view_data', 'waiters_enabled', 'tables_enabled', 'is_service_staff_required'));
+                ->with(compact('tables', 'waiters', 'view_data', 'waiters_enabled', 'tables_enabled', 'is_service_staff_required'));
         }
     }
 
@@ -89,7 +94,9 @@ class DataController extends Controller
         Transaction::where('id', $input['transaction_id'])
             ->where('type', 'sell')
             ->where('business_id', $input['business_id'])
-            ->update(['res_table_id' => $table_id,
-                'res_waiter_id' => $res_waiter_id]);
+            ->update([
+                'res_table_id' => $table_id,
+                'res_waiter_id' => $res_waiter_id
+            ]);
     }
 }

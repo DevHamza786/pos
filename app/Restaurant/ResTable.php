@@ -2,6 +2,7 @@
 
 namespace App\Restaurant;
 
+use App\Restaurant\ResTablePicture;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -22,4 +23,8 @@ class ResTable extends Model
      * @var array
      */
     protected $guarded = ['id'];
+
+    public function tablePicture(){
+        return $this->hasMany(ResTablePicture::class,'table_id','id');
+    }
 }

@@ -18,9 +18,21 @@
 					<div class="col-sm-6">
 						<strong>@lang('messages.location'):</strong> {{ $booking->location->name }}<br>
 						<strong>@lang('restaurant.table'):</strong> {{ $booking->table->name ?? '--' }}<br>
+						<strong>@lang('Room Charges'):</strong> {{ $currencySymbol.' '.$booking->table->charges ?? '--' }}<br>
 						<strong>@lang('restaurant.booking_starts'):</strong> {{ $booking_start }}<br>
 						<strong>@lang('restaurant.booking_ends'):</strong> {{ $booking_end }}
 					</div>
+
+					@if($booking->table->tablePicture->count() > 0)
+						<div class="col-sm-12">
+							<label>Room Pictuers</label>
+							@foreach($booking->table->tablePicture as $tbpic)
+								<div>
+									<img src="{{ asset('/uploads/' . $tbpic->path) }}" alt="{{ $tbpic->name }}"height="200">
+								</div>
+							@endforeach
+						</div>
+					@endif
 				</div>
 				<br>
 				<hr>

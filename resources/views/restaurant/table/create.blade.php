@@ -1,8 +1,7 @@
 <div class="modal-dialog" role="document">
   <div class="modal-content">
 
-    {!! Form::open(['url' => action('Restaurant\TableController@store'), 'method' => 'post', 'id' => 'table_add_form' ]) !!}
-
+    {!! Form::open(['url' => action('Restaurant\TableController@store'), 'method' => 'post', 'id' => 'table_add_form' , 'enctype' => 'multipart/form-data' ]) !!}
     <div class="modal-header">
       <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       <h4 class="modal-title">@lang( 'restaurant.add_table' )</h4>
@@ -28,13 +27,23 @@
       </div>
 
       <div class="form-group">
+        {!! Form::label('charges', 'Room Charges' . ':*') !!}
+        {!! Form::number('charges', null, ['class' => 'form-control', 'step' => '0.01', 'min' => '0.01', 'required', 'placeholder' => 'Room Charges']) !!}
+      </div>
+
+      <div class="form-group">
         {!! Form::label('description', __( 'restaurant.short_description' ) . ':') !!}
           {!! Form::text('description', null, ['class' => 'form-control','placeholder' => __( 'restaurant.short_description' )]); !!}
+      </div>
+
+      <div class="form-group">
+        {!! Form::label('pictures', 'Room Pictures') !!}
+        {!! Form::file('pictures[]', ['class' => 'form-control', 'multiple' => 'multiple', 'placeholder' => 'Room Pictures']) !!}
       </div>
     </div>
 
     <div class="modal-footer">
-      <button type="submit" class="btn btn-primary">@lang( 'messages.save' )</button>
+      <button type="submit" class="btn btn-primary btn-submit">@lang( 'messages.save' )</button>
       <button type="button" class="btn btn-default" data-dismiss="modal">@lang( 'messages.close' )</button>
     </div>
 

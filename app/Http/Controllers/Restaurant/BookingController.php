@@ -105,7 +105,6 @@ class BookingController extends Controller
                 //Check if booking is available for the required input
                 $query = Booking::where('business_id', $business_id)
                                 ->where('location_id', $input['location_id'])
-                                ->where('contact_id', $input['contact_id'])
                                 ->where(function ($q) use ($date_range) {
                                     $q->whereBetween('booking_start', $date_range)
                                     ->orWhereBetween('booking_end', $date_range);
@@ -165,6 +164,7 @@ class BookingController extends Controller
     public function show($id)
     {
         if (request()->ajax()) {
+            $currencySymbol = request()->session()->get('currency.symbol');
             $business_id = request()->session()->get('user.business_id');
             $booking = Booking::where('business_id', $business_id)
                                 ->where('id', $id)
@@ -180,7 +180,7 @@ class BookingController extends Controller
                     'completed' => __('restaurant.completed'),
                     'cancelled' => __('restaurant.cancelled'),
                 ];
-                return view('restaurant.booking.show', compact('booking', 'booking_start', 'booking_end', 'booking_statuses'));
+                return view('restaurant.booking.show', compact('currencySymbol','booking', 'booking_start', 'booking_end', 'booking_statuses'));
             }
         }
     }
