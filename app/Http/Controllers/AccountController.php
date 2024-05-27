@@ -784,7 +784,7 @@ class AccountController extends Controller
                 $from_account = $request->input('from_account');
                 if (!empty($from_account)) {
                     $debit_data = $credit_data;
-                    $debit_data['type'] = 'debit';
+                    $debit_data['type'] = 'credit';
                     $debit_data['account_id'] = $from_account;
                     $debit_data['transfer_transaction_id'] = $credit->id;
 
@@ -807,7 +807,6 @@ class AccountController extends Controller
                         'msg' => __("messages.something_went_wrong")
                     ];
         }
-
         return $output;
     }
 
