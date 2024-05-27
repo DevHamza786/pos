@@ -52,7 +52,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
+                        {{-- <tr>
                             <th>@lang('account.supplier_due'):</th>
                             <td>&nbsp;</td>
                             <td>
@@ -71,12 +71,12 @@
                                 </span>
                             </td>
                             <td>&nbsp;</td>
-                        </tr>
-                        <tr>
+                        </tr> --}}
+                        {{-- <tr>
                             <th>@lang('account.account_balances'):</th>
                             <td>&nbsp;</td>
                             <td>&nbsp;</td>
-                        </tr>
+                        </tr> --}}
                     </tbody>
                     <tbody id="account_balances_details">
                     </tbody>
@@ -136,63 +136,6 @@
             });
         });
 
-        // function update_trial_balance(){
-        //     var loader = '<i class="fas fa-sync fa-spin fa-fw"></i>';
-        //     $('span.remote-data').each( function() {
-        //         $(this).html(loader);
-        //     });
-
-        //     $('table#trial_balance_table tbody#capital_account_balances_details').html('<tr><td colspan="3"><i class="fas fa-sync fa-spin fa-fw"></i></td></tr>');
-        //     $('table#trial_balance_table tbody#account_balances_details').html('<tr><td colspan="3"><i class="fas fa-sync fa-spin fa-fw"></i></td></tr>');
-
-        //     var end_date = $('input#end_date').val();
-        //     var location_id = $('#trial_bal_location_id').val()
-        //     $.ajax({
-        //         url: "{{ action('AccountReportsController@trialBalance') }}?end_date=" + end_date + '&location_id=' + location_id,
-        //         dataType: "json",
-        //         success: function(result){
-        //             $('span#supplier_due').text(__currency_trans_from_en(result.supplier_due, true));
-        //             __write_number($('input#hidden_supplier_due'), result.supplier_due);
-
-        //             $('span#customer_due').text(__currency_trans_from_en(result.customer_due, true));
-        //             __write_number($('input#hidden_customer_due'), result.customer_due);
-
-        //             var account_balances = result.account_balances;
-        //             console.log(account_balances)
-        //             $('table#trial_balance_table tbody#account_balances_details').html('');
-        //             for (var key in account_balances) {
-        //                 var accnt_bal = __currency_trans_from_en(result.account_balances[key]);
-        //                 var accnt_bal_with_sym = __currency_trans_from_en(result.account_balances[key], true);
-        //                 var account_tr = '<tr><td class="pl-20-td">' + key + ':</td><td><input type="hidden" class="credit" value="' + accnt_bal + '">' + accnt_bal_with_sym + '</td><td>&nbsp;</td></tr>';
-        //                 console.log(account_tr);
-        //                 $('table#trial_balance_table tbody#account_balances_details').append(account_tr);
-        //             }
-
-        //             var capital_account_details = result.capital_account_details;
-        //             $('table#trial_balance_table tbody#capital_account_balances_details').html('');
-        //             for (var key in capital_account_details) {
-        //                 var accnt_bal = __currency_trans_from_en(result.capital_account_details[key]);
-        //                 var accnt_bal_with_sym = __currency_trans_from_en(result.capital_account_details[key], true);
-        //                 var account_tr = '<tr><td class="pl-20-td">' + key + ':</td><td><input type="hidden" class="credit" value="' + accnt_bal + '">' + accnt_bal_with_sym + '</td><td>&nbsp;</td></tr>';
-        //                 $('table#trial_balance_table tbody#capital_account_balances_details').append(account_tr);
-        //             }
-
-        //             var total_debit = 0;
-        //             var total_credit = 0;
-        //             $('input.debit').each( function(){
-        //                 console.log(total_debit)
-        //                 total_debit += __read_number($(this));
-        //             });
-        //             $('input.credit').each( function(){
-        //                 total_credit += __read_number($(this));
-        //             });
-
-        //             $('span#total_debit').text(__currency_trans_from_en(total_debit, true));
-        //             $('span#total_credit').text(__currency_trans_from_en(total_credit, true));
-        //         }
-        //     });
-        // }
-
         function update_trial_balance() {
             var loader = '<i class="fas fa-sync fa-spin fa-fw"></i>';
             $('span.remote-data').each(function() {
@@ -222,8 +165,8 @@
                     $('table#trial_balance_table tbody#account_balances_details').html('');
                     for (var key in account_balances) {
                         if (account_balances.hasOwnProperty(key)) {
-                            var accnt_bal = account_balances[key];
-                            var accnt_bal_with_sym = __currency_trans_from_en(account_balances[key], true);
+                            var accnt_bal = parseFloat(account_balances[key]);
+                            var accnt_bal_with_sym = __currency_trans_from_en(Math.abs(account_balances[key]), true);
                             var debit_or_credit_class = getDebitOrCreditClass(key, accnt_bal);
                             console.log(debit_or_credit_class);
                             if (debit_or_credit_class == 'debit') {
