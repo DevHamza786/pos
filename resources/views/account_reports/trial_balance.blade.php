@@ -168,7 +168,6 @@
                             var accnt_bal = parseFloat(account_balances[key]);
                             var accnt_bal_with_sym = __currency_trans_from_en(Math.abs(account_balances[key]), true);
                             var debit_or_credit_class = getDebitOrCreditClass(key, accnt_bal);
-                            console.log(debit_or_credit_class);
                             if (debit_or_credit_class == 'debit') {
                                 var account_tr = '<tr><td class="pl-20-td">' + key +
                                     ':</td><td>&nbsp;</td><td><input type="hidden" class="' +
@@ -181,7 +180,6 @@
                                     Math.abs(accnt_bal) + '">' + accnt_bal_with_sym +
                                     '</td><td>&nbsp;</td></tr>';
                             }
-                            console.log(account_tr)
                             $('table#trial_balance_table tbody#account_balances_details').append(account_tr);
                         }
                     }

@@ -426,11 +426,9 @@ class ExpenseController extends Controller
                             'msg' => __('messages.something_went_wrong')
                         ];
         }
-
         if (request()->ajax()) {
             return $output;
         }
-        dd('ok');
         return redirect('expenses')->with('status', $output);
     }
 

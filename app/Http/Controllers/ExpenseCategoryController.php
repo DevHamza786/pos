@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AccountType;
 use App\ExpenseCategory;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -64,7 +65,12 @@ class ExpenseCategoryController extends Controller
                         ->whereNull('parent_id')
                         ->pluck('name', 'id');
 
-        return view('expense_category.create')->with(compact('categories'));
+        $account_types = AccountType::where('business_id', $business_id)
+        ->whereNull('parent_account_type_id')
+        ->with(['sub_types'])
+        ->get();
+
+        return view('expense_category.create')->with(compact('categories','account_types'));
     }
 
     /**
@@ -85,6 +91,10 @@ class ExpenseCategoryController extends Controller
 
             if (!empty($request->input('add_as_sub_cat')) &&  $request->input('add_as_sub_cat') == 1 && !empty($request->input('parent_id'))) {
                 $input['parent_id'] = $request->input('parent_id');
+            }
+
+            if($request->input('account_type_id')){
+                $input['account_type_id'] = $request->account_type_id;
             }
 
             ExpenseCategory::create($input);
