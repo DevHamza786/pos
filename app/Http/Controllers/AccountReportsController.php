@@ -238,9 +238,9 @@ class AccountReportsController extends Controller
 
         $account_details = $account_details->merge($fixedAssetsExpenseByCategory->toArray());
 
-        $revenue = (float) $account_details['Sales'];
-        $expenses = (float) $account_details['Expense'];
-        $Purchase = (float) $account_details['Purchase'];
+        $revenue = (float) ($account_details['Sales'] ?? 0);
+        $expenses = (float) ($account_details['Expense'] ?? 0);
+        $Purchase = (float) ($account_details['Purchase'] ?? 0);
         // Calculate profit
         $grossprofit = abs($revenue) - $Purchase;
         $spendexpense = $expenses - $totalExpense;
@@ -248,7 +248,10 @@ class AccountReportsController extends Controller
         // Calculate retained earnings
         $retained_earnings =  $spendexpense - $grossprofit;
 
-        $account_details = $account_details->merge(['Retained Earnings' => $retained_earnings]);
+        if($retained_earnings != 0){
+            $account_details = $account_details->merge(['Retained Earnings' => $retained_earnings]);
+        }
+
 
         return $account_details;
     }
