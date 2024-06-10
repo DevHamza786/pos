@@ -190,6 +190,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/reports/tax-details', 'ReportController@getTaxDetails');
     Route::get('/reports/trending-products', 'ReportController@getTrendingProducts');
     Route::get('/reports/expense-report', 'ReportController@getExpenseReport');
+    Route::get('/reports/fixed-assets-report', 'ReportController@getAssetsReport');
     Route::get('/reports/stock-adjustment-report', 'ReportController@getStockAdjustmentReport');
     Route::get('/reports/register-report', 'ReportController@getRegisterReport');
     Route::get('/reports/sales-representative-report', 'ReportController@getSalesRepresentativeReport');

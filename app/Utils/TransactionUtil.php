@@ -2840,7 +2840,8 @@ class TransactionUtil extends Util
         $business_id,
         $filters = [],
         $type = 'by_category'
-    ) {
+    ) 
+    {
         $query = Transaction::leftjoin('expense_categories AS ec', 'transactions.expense_category_id', '=', 'ec.id')
                             ->where('transactions.business_id', $business_id)
                             ->whereIn('type', ['expense', 'expense_refund']);
@@ -2874,6 +2875,58 @@ class TransactionUtil extends Util
                 DB::raw("SUM( IF(transactions.type='expense_refund', -1 * final_total, final_total) ) as total_expense"),
                 'ec.name as category'
             )
+                        ->groupBy('expense_category_id')
+                        ->get();
+        } elseif ($type == 'total') {
+            $expenses = $query->select(
+                DB::raw("SUM( IF(transactions.type='expense_refund', -1 * final_total, final_total) ) as total_expense")
+            )
+                        ->first();
+        }
+        
+        return $expenses;
+    }
+
+    public function getAssetsReport(
+        $business_id,
+        $filters = [],
+        $type = 'by_category'
+    ) 
+    {
+        $query = Transaction::leftjoin('expense_categories AS ec', 'transactions.expense_category_id', '=', 'ec.id')
+                            ->where('transactions.business_id', $business_id)
+                            ->whereIn('type', ['expense', 'expense_refund']);
+        // ->where('payment_status', 'paid');
+
+        $permitted_locations = auth()->user()->permitted_locations();
+        if ($permitted_locations != 'all') {
+            $query->whereIn('transactions.location_id', $permitted_locations);
+        }
+
+        if (!empty($filters['location_id'])) {
+            $query->where('transactions.location_id', $filters['location_id']);
+        }
+
+        if (!empty($filters['expense_for'])) {
+            $query->where('transactions.expense_for', $filters['expense_for']);
+        }
+
+        if (!empty($filters['category'])) {
+            $query->where('ec.id', $filters['category']);
+        }
+
+        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+            $query->whereBetween(DB::raw('date(transaction_date)'), [$filters['start_date'],
+                $filters['end_date']]);
+        }
+
+        //Check tht type of report and return data accordingly
+        if ($type == 'by_category') {
+            $expenses = $query->select(
+                DB::raw("SUM( IF(transactions.type='expense_refund', -1 * final_total, final_total) ) as total_expense"),
+                'ec.name as category'
+            )
+                        ->where('account_type_id','5')
                         ->groupBy('expense_category_id')
                         ->get();
         } elseif ($type == 'total') {

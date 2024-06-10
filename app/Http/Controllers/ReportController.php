@@ -896,6 +896,49 @@ class ReportController extends Controller
                     ->with(compact('chart', 'categories', 'business_locations', 'expenses'));
     }
 
+    public function getAssetsReport(Request $request)
+    {
+        if (!auth()->user()->can('expense_report.view')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $business_id = $request->session()->get('user.business_id');
+        $filters = $request->only(['category', 'location_id']);
+
+        $date_range = $request->input('date_range');
+        
+        if (!empty($date_range)) {
+            $date_range_array = explode('~', $date_range);
+            $filters['start_date'] = $this->transactionUtil->uf_date(trim($date_range_array[0]));
+            $filters['end_date'] = $this->transactionUtil->uf_date(trim($date_range_array[1]));
+        } else {
+            $filters['start_date'] = \Carbon\Carbon::now()->startOfYear()->format('Y-m-d');
+            $filters['end_date'] = \Carbon\Carbon::now()->endOfYear()->format('Y-m-d');
+        }
+
+        $expenses = $this->transactionUtil->getAssetsReport($business_id, $filters);
+
+        $values = [];
+        $labels = [];
+        foreach ($expenses as $expense) {
+            $values[] = (float) $expense->total_expense;
+            $labels[] = !empty($expense->category) ? $expense->category : __('report.others');
+        }
+
+        $chart = new CommonChart;
+        $chart->labels($labels)
+            ->title(__('Fixed Assets Report'))
+            ->dataset(__('report.total_expense'), 'column', $values);
+
+        $categories = ExpenseCategory::where('business_id', $business_id)->where('account_type_id','5')
+                            ->pluck('name', 'id');
+        
+        $business_locations = BusinessLocation::forDropdown($business_id, true);
+
+        return view('report.fixed_assets_report')
+                    ->with(compact('chart', 'categories', 'business_locations', 'expenses'));
+    }
+
     /**
      * Shows stock adjustment report
      *

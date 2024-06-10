@@ -218,7 +218,7 @@
           </div>
         </div>
 
-        <div class="clearfix"></div>
+        {{-- <div class="clearfix"></div> --}}
 
         <!-- Rack, Row & position number -->
         @if(session('business.enable_racks') || session('business.enable_row') || session('business.enable_position'))
@@ -255,7 +255,7 @@
             {!! Form::text('weight', !empty($duplicate_product->weight) ? $duplicate_product->weight : null, ['class' => 'form-control', 'placeholder' => __('lang_v1.weight')]); !!}
           </div>
         </div>
-        @php
+        {{-- @php
           $custom_labels = json_decode(session('business.custom_labels'), true);
           $product_custom_field1 = !empty($custom_labels['product']['custom_field_1']) ? $custom_labels['product']['custom_field_1'] : __('lang_v1.product_custom_field1');
           $product_custom_field2 = !empty($custom_labels['product']['custom_field_2']) ? $custom_labels['product']['custom_field_2'] : __('lang_v1.product_custom_field2');
@@ -290,7 +290,7 @@
             {!! Form::label('product_custom_field4',  $product_custom_field4 . ':') !!}
             {!! Form::text('product_custom_field4', !empty($duplicate_product->product_custom_field4) ? $duplicate_product->product_custom_field4 : null, ['class' => 'form-control', 'placeholder' => $product_custom_field4]); !!}
           </div>
-        </div>
+        </div> --}}
         <!--custom fields-->
         <div class="clearfix"></div>
         @include('layouts.partials.module_form_part')

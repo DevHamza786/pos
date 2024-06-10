@@ -11,7 +11,7 @@ use App\BusinessLocation;
 class Account extends Model
 {
     use SoftDeletes;
-    
+
     protected $guarded = ['id'];
 
     /**
@@ -22,17 +22,17 @@ class Account extends Model
     protected $casts = [
         'account_details' => 'array',
     ];
-    
+
     public static function forDropdown($business_id, $prepend_none, $closed = false, $show_balance = false)
     {
         $query = Account::where('business_id', $business_id);
 
         $permitted_locations = auth()->user()->permitted_locations();
-            $account_ids = [];
+        $account_ids = [];
         if ($permitted_locations != 'all') {
             $locations = BusinessLocation::where('business_id', $business_id)
-                            ->whereIn('id', $permitted_locations)
-                            ->get();
+                ->whereIn('id', $permitted_locations)
+                ->get();
 
             foreach ($locations as $location) {
                 if (!empty($location->default_payment_accounts)) {
@@ -47,7 +47,6 @@ class Account extends Model
 
             $account_ids = array_unique($account_ids);
         }
-
         if ($permitted_locations != 'all') {
             $query->whereIn('accounts.id', $account_ids);
         }
@@ -58,15 +57,20 @@ class Account extends Model
             //     $join->on('AT.account_id', '=', 'accounts.id');
             //     $join->whereNull('AT.deleted_at');
             // })
-            $query->select('accounts.name', 
-                    'accounts.id', 
-                    DB::raw("(SELECT SUM( IF(account_transactions.type='credit', amount, -1*amount) ) as balance from account_transactions where account_transactions.account_id = accounts.id AND deleted_at is NULL) as balance")
-                );
+            $query->select(
+                'accounts.name',
+                'accounts.id',
+                DB::raw("(SELECT SUM( IF(account_transactions.type='credit', amount, -1*amount) ) as balance from account_transactions where account_transactions.account_id = accounts.id AND deleted_at is NULL) as balance")
+            );
         }
 
         if (!$closed) {
             $query->where('is_closed', 0);
         }
+
+        $query->whereHas('account_type', function ($query) {
+            $query->where('name', 'like', '%Current Assets%');
+        });
 
         $accounts = $query->get();
 

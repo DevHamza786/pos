@@ -227,12 +227,12 @@
 					</div>
 				@endif
 				@if($sale_type != 'sales_order')
-					<div class="col-sm-3">
+					{{-- <div class="col-sm-3">
 						<div class="form-group">
 							{!! Form::label('invoice_scheme_id', __('invoice.invoice_scheme') . ':') !!}
 							{!! Form::select('invoice_scheme_id', $invoice_schemes, $default_invoice_schemes->id, ['class' => 'form-control select2', 'placeholder' => __('messages.please_select')]); !!}
 						</div>
-					</div>
+					</div> --}}
 				@endif
 					@can('edit_invoice_number')
 					<div class="col-sm-3">
@@ -529,8 +529,8 @@
 			    </div>
 				<input type="hidden" name="is_direct_sale" value="1">
 			@endcomponent
-			@component('components.widget', ['class' => 'box-solid'])
-			<div class="col-md-4">
+			{{-- @component('components.widget', ['class' => 'box-solid']) --}}
+			{{-- <div class="col-md-4">
 				<div class="form-group">
 		            {!! Form::label('shipping_details', __('sale.shipping_details')) !!}
 		            {!! Form::textarea('shipping_details',null, ['class' => 'form-control','placeholder' => __('sale.shipping_details') ,'rows' => '3', 'cols'=>'30']); !!}
@@ -720,8 +720,8 @@
 						</tr>
 					</tbody>
 				</table>
-			</div>
-		    <div class="col-md-4 col-md-offset-8">
+			</div> --}}
+		    {{-- <div class="col-md-4 col-md-offset-8">
 		    	@if(!empty($pos_settings['amount_rounding_method']) && $pos_settings['amount_rounding_method'] > 0)
 		    	<small id="round_off"><br>(@lang('lang_v1.round_off'): <span id="round_off_text">0</span>)</small>
 				<br/>
@@ -733,7 +733,7 @@
 					<span id="total_payable">0</span>
 				</div>
 		    </div>
-			@endcomponent
+			@endcomponent --}}
 		</div>
 	</div>
 	@if(!empty($common_settings['is_enabled_export']) && $sale_type != 'sales_order')
