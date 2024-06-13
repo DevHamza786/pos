@@ -37,7 +37,6 @@ class AddAccountTransaction
      */
     public function handle(TransactionPaymentAdded $event)
     {
-        // dd($event);
         // echo "<pre>";
         // print_r($event->transactionPayment->toArray());
         // exit;

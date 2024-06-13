@@ -5,7 +5,7 @@
 			<span class="input-group-addon">
 				<i class="fa fa-table"></i>
 			</span>
-			{!! Form::select('res_table_id', $tables, $view_data['res_table_id'], ['class' => 'form-control', 'placeholder' => __('restaurant.select_table')]); !!}
+			{!! Form::select('res_table_id', $tables, $view_data['res_table_id'], ['class' => 'form-control', 'placeholder' => __('restaurant.select_table'), 'required' => 'required']); !!}
 		</div>
 	</div>
 </div>

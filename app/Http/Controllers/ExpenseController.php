@@ -185,6 +185,9 @@ class ExpenseController extends Controller
                                 </span>
                         </button>
                     <ul class="dropdown-menu dropdown-menu-left" role="menu">
+                    @if(auth()->user()->can("expense.edit"))
+                        <li><a href="{{action(\'ExpenseController@edit\', [$id])}}"><i class="glyphicon glyphicon-edit"></i> @lang("messages.edit")</a></li>
+                    @endif
                     @if($document)
                         <li><a href="{{ url(\'uploads/documents/\' . $document)}}" 
                         download=""><i class="fa fa-download" aria-hidden="true"></i> @lang("purchase.download_document")</a></li>
@@ -192,7 +195,10 @@ class ExpenseController extends Controller
                             <li><a href="#" data-href="{{ url(\'uploads/documents/\' . $document)}}" class="view_uploaded_document"><i class="fas fa-file-image" aria-hidden="true"></i>@lang("lang_v1.view_document")</a></li>
                         @endif
                     @endif
-                    
+                    @if(auth()->user()->can("expense.delete"))
+                        <li>
+                        <a href="#" data-href="{{action(\'ExpenseController@destroy\', [$id])}}" class="delete_expense"><i class="glyphicon glyphicon-trash"></i> @lang("messages.delete")</a></li>
+                    @endif
                     <li class="divider"></li> 
                     @if($payment_status != "paid")
                         <li><a href="{{action("TransactionPaymentController@addPayment", [$id])}}" class="add_payment_modal"><i class="fas fa-money-bill-alt" aria-hidden="true"></i> @lang("purchase.add_payment")</a></li>
@@ -426,6 +432,7 @@ class ExpenseController extends Controller
                             'msg' => __('messages.something_went_wrong')
                         ];
         }
+
         if (request()->ajax()) {
             return $output;
         }

@@ -12,8 +12,6 @@ use DB;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use App\BusinessLocation;
-use App\ExpenseCategory;
-use App\Transaction;
 
 class AccountReportsController extends Controller
 {
@@ -212,14 +210,11 @@ class AccountReportsController extends Controller
             }
         }
 
-
-        $account_details = $query->select([
-            'name',
-            DB::raw("SUM( IF(AT.type='credit', amount, -1*amount) ) as balance")
-        ])
-            ->groupBy('accounts.id')
-            ->get()
-            ->pluck('balance', 'name');
+        $account_details = $query->select(['name',
+                                        DB::raw("SUM( IF(AT.type='credit', amount, -1*amount) ) as balance")])
+                                ->groupBy('accounts.id')
+                                ->get()
+                                ->pluck('balance', 'name');
 
         $fixedAssetsExpenses = $this->getFixedAssetsExpenses($business_id, $end_date);
 
@@ -245,6 +240,11 @@ class AccountReportsController extends Controller
         }
 
         return $account_details;
+        // if ($account_type == 'others') {
+        //    $query->NotCapital();
+        // } elseif ($account_type == 'capital') {
+        //     $query->where('account_type', 'capital');
+        // }
     }
 
 
@@ -381,6 +381,27 @@ class AccountReportsController extends Controller
                 '=',
                 'T.id'
             )
+                ->leftjoin('accounts as A', 'transaction_payments.account_id', '=', 'A.id')
+                ->where('transaction_payments.business_id', $business_id)
+                ->whereNull('transaction_payments.parent_id')
+                ->where('transaction_payments.method', '!=', 'advance')
+                ->leftjoin('contacts as c', 'transaction_payments.payment_for', '=', 'c.id')
+                ->select([
+                    'paid_on',
+                    'payment_ref_no',
+                    'T.ref_no',
+                    'T.invoice_no',
+                    'T.type',
+                    'T.id as transaction_id',
+                    'A.name as account_name',
+                    'A.account_number',
+                    'transaction_payments.id as payment_id',
+                    'transaction_payments.account_id',
+                    'c.name as contact_name',
+                    'c.type as contact_type',
+                    'transaction_payments.is_advance',
+                    'transaction_payments.amount'
+                ]);
                 ->leftjoin('accounts as A', 'transaction_payments.account_id', '=', 'A.id')
                 ->where('transaction_payments.business_id', $business_id)
                 ->whereNull('transaction_payments.parent_id')
