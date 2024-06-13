@@ -2,32 +2,33 @@
 
 namespace App\Utils;
 
-use App\AccountTransaction;
-use App\Business;
-use App\BusinessLocation;
+use App\Account;
 use App\Contact;
-use App\Currency;
-use App\Events\TransactionPaymentAdded;
-use App\Events\TransactionPaymentDeleted;
-use App\Events\TransactionPaymentUpdated;
-use App\Exceptions\PurchaseSellMismatch;
-use App\Exceptions\AdvanceBalanceNotAvailable;
-use App\InvoiceScheme;
 use App\Product;
-use App\PurchaseLine;
-use App\Restaurant\ResTable;
 use App\TaxRate;
-use App\Transaction;
-use App\TransactionPayment;
-use App\TransactionSellLine;
-use App\TransactionSellLinesPurchaseLines;
+use App\Business;
+use App\Currency;
 use App\Variation;
+use App\Transaction;
+use App\PurchaseLine;
+use App\InvoiceScheme;
+use App\BusinessLocation;
+use App\CashDenomination;
+use App\Utils\ModuleUtil;
+use App\AccountTransaction;
+use App\TransactionPayment;
+use App\Utils\BusinessUtil;
+use Illuminate\Support\Str;
+use App\Restaurant\ResTable;
+use App\TransactionSellLine;
 use App\VariationLocationDetails;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use App\Utils\ModuleUtil;
-use App\Utils\BusinessUtil;
-use App\CashDenomination;
+use App\Events\TransactionPaymentAdded;
+use App\Exceptions\PurchaseSellMismatch;
+use App\Events\TransactionPaymentDeleted;
+use App\Events\TransactionPaymentUpdated;
+use App\TransactionSellLinesPurchaseLines;
+use App\Exceptions\AdvanceBalanceNotAvailable;
 
 class TransactionUtil extends Util
 {
@@ -707,7 +708,7 @@ class TransactionUtil extends Util
         $payments_formatted = [];
         $edit_ids = [0];
         $account_transactions = [];
-        
+
         if (!is_object($transaction)) {
             $transaction = Transaction::findOrFail($transaction);
         }
@@ -777,7 +778,62 @@ class TransactionUtil extends Util
                         }
                     }
                     $payments_formatted[] = new TransactionPayment($payment_data);
+                    if (!empty($payment['denominations'])) {
+                        $denominations[$payment_ref_no] = $payment['denominations'];
+                    }
 
+                    $account_transactions[$c] = [];
+
+                    //create account transaction
+                    $payment_data['transaction_type'] = $transaction->type;
+                    $account_transactions[$c] = $payment_data;
+
+                    $c++;
+                }else{
+                    $prefix_type = 'sell_payment';
+                    if ($transaction->type == 'purchase') {
+                        $prefix_type = 'purchase_payment';
+                    }elseif($transaction->type == 'expense'){
+                        $prefix_type = 'expense';
+                    }
+                    $ref_count = $this->setAndGetReferenceCount($prefix_type, $business_id);
+                    //Generate reference number
+                    $payment_ref_no = $this->generateReferenceNumber($prefix_type, $ref_count, $business_id);
+
+                    if (!empty($payment['paid_on'])) {
+                        $paid_on = $uf_data ? $this->uf_date($payment['paid_on'], true) : $payment['paid_on'];
+                    } else {
+                        $paid_on = \Carbon::now()->toDateTimeString();
+                    }
+                    
+                    $payment_data = [
+                        'amount' => $payment_amount,
+                        'method' => $payment['method'],
+                        'business_id' => $transaction->business_id,
+                        'is_return' => isset($payment['is_return']) ? $payment['is_return'] : 0,
+                        'card_transaction_number' => isset($payment['card_transaction_number']) ? $payment['card_transaction_number'] : null,
+                        'card_number' => isset($payment['card_number']) ? $payment['card_number'] : null,
+                        'card_type' => isset($payment['card_type']) ? $payment['card_type'] : null,
+                        'card_holder_name' => isset($payment['card_holder_name']) ? $payment['card_holder_name'] : null,
+                        'card_month' => isset($payment['card_month']) ? $payment['card_month'] : null,
+                        'card_security' => isset($payment['card_security']) ? $payment['card_security'] : null,
+                        'cheque_number' => isset($payment['cheque_number']) ? $payment['cheque_number'] : null,
+                        'bank_account_number' => isset($payment['bank_account_number']) ? $payment['bank_account_number'] : null,
+                        'note' => isset($payment['note']) ? $payment['note'] : null,
+                        'paid_on' => $paid_on,
+                        'created_by' => empty($user_id) ? auth()->user()->id : $user_id,
+                        'payment_for' => $transaction->contact_id,
+                        'payment_ref_no' => $payment_ref_no,
+                        'account_id' => !empty($payment['account_id']) && $payment['method'] != 'advance' ? $payment['account_id'] : null,
+                        'total_sell' => $transaction['final_total']
+                    ];
+
+                    for ($i=1; $i<8; $i++) { 
+                        if ($payment['method'] == 'custom_pay_' . $i) {
+                            $payment_data['transaction_no'] = $payment["transaction_no_{$i}"];
+                        }
+                    }
+                    $payments_formatted[] = new TransactionPayment($payment_data);
                     if (!empty($payment['denominations'])) {
                         $denominations[$payment_ref_no] = $payment['denominations'];
                     }
@@ -804,16 +860,54 @@ class TransactionUtil extends Util
                 event(new TransactionPaymentDeleted($deleted_transaction_payment));
             }
         }
-
         if (!empty($payments_formatted)) {
-            $transaction->payment_lines()->saveMany($payments_formatted);
-            $payment_lines = $transaction->payment_lines;
-            foreach ($account_transactions as $account_transaction) {
-                $payment = $payment_lines->where('payment_ref_no', $account_transaction['payment_ref_no'])->first();
-
-                if (!empty($payment)) {
-                    event(new TransactionPaymentAdded($payment, $account_transaction , $transaction['final_total']));
+            if($payment_amount != 0){                
+                $transaction->payment_lines()->saveMany($payments_formatted);
+                $payment_lines = $transaction->payment_lines;
+                foreach ($account_transactions as $account_transaction) {
+                    $payment = $payment_lines->where('payment_ref_no', $account_transaction['payment_ref_no'])->first();
+                    if (!empty($payment)) {
+                        event(new TransactionPaymentAdded($payment, $account_transaction , $transaction['final_total']));
+                    }
                 }
+            }else{
+                if($transaction->type == 'expense'){
+                    $payment_status = $this->updatePaymentStatus($transaction->id,  $transaction['final_total']);
+                    $expenseTransaction = Account::select('id', 'name')->where('name', 'like', '%Expense%')
+                    ->whereHas('account_type', function ($query) {
+                        $query->where('name', 'like', '%EXPENSE%');
+                    })
+                    ->first();
+                    
+                    if( $transaction['final_total'] != null){
+                        $account_transaction_data = [
+                            'amount' => $transaction['final_total'],
+                            'account_id' => $expenseTransaction->id,
+                            'type' => 'credit',
+                            'operation_date' => $transaction->created_at,
+                            'created_by' => $transaction->created_by,
+                            'transaction_id' => $transaction->id,
+                        ];
+                        AccountTransaction::createAccountTransaction($account_transaction_data);
+                        if($payment_amount == 0 && $payment_status == 'due'){
+                            $purchaseTransaction = Account::select('id', 'name')->where('name', 'like', '%Payable%')
+                            ->whereHas('account_type', function ($query) {
+                                $query->where('name', 'like', '%LIABILITIES%');
+                            })
+                            ->first();
+                            $account_transaction_data = [
+                                'amount' => $transaction['final_total'],
+                                'account_id' => $purchaseTransaction->id,
+                                'type' => 'debit',
+                                'operation_date' => $transaction->created_at,
+                                'created_by' => $transaction->created_by,
+                                'transaction_id' => $transaction->id,
+                            ];
+                            AccountTransaction::createAccountTransaction($account_transaction_data);
+                        }
+                    }
+                }
+
             }
 
             //add denominations
@@ -825,7 +919,6 @@ class TransactionUtil extends Util
                 }
             }
         }
-
         return true;
     }
 
@@ -2840,8 +2933,7 @@ class TransactionUtil extends Util
         $business_id,
         $filters = [],
         $type = 'by_category'
-    ) 
-    {
+    ) {
         $query = Transaction::leftjoin('expense_categories AS ec', 'transactions.expense_category_id', '=', 'ec.id')
                             ->where('transactions.business_id', $business_id)
                             ->whereIn('type', ['expense', 'expense_refund']);
@@ -5640,7 +5732,7 @@ class TransactionUtil extends Util
         }
 
         $transaction = Transaction::create($transaction_data);
-        
+
         $payments = !empty($request->input('payment')) ? $request->input('payment') : [];
         //add expense payment
         $this->createOrUpdatePaymentLines($transaction, $payments, $business_id);

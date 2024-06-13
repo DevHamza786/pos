@@ -529,7 +529,7 @@
 			    </div>
 				<input type="hidden" name="is_direct_sale" value="1">
 			@endcomponent
-			{{-- @component('components.widget', ['class' => 'box-solid']) --}}
+			@component('components.widget', ['class' => 'box-solid'])
 			{{-- <div class="col-md-4">
 				<div class="form-group">
 		            {!! Form::label('shipping_details', __('sale.shipping_details')) !!}
@@ -721,7 +721,7 @@
 					</tbody>
 				</table>
 			</div> --}}
-		    {{-- <div class="col-md-4 col-md-offset-8">
+		    <div class="col-md-4 col-md-offset-8">
 		    	@if(!empty($pos_settings['amount_rounding_method']) && $pos_settings['amount_rounding_method'] > 0)
 		    	<small id="round_off"><br>(@lang('lang_v1.round_off'): <span id="round_off_text">0</span>)</small>
 				<br/>
@@ -733,7 +733,7 @@
 					<span id="total_payable">0</span>
 				</div>
 		    </div>
-			@endcomponent --}}
+			@endcomponent
 		</div>
 	</div>
 	@if(!empty($common_settings['is_enabled_export']) && $sale_type != 'sales_order')
@@ -804,7 +804,7 @@
 						</div>
 					</div>
 					@include('sale_pos.partials.payment_row_form', ['row_index' => 0, 'show_date' => true, 'show_denomination' => true])
-					<div class="row">
+					{{-- <div class="row">
 						<div class="col-md-12">
 			        		<hr>
 			        		<strong>
@@ -854,7 +854,7 @@
 						</div>
 						@endif
 						@include('sale_pos.partials.payment_type_details', ['payment_line' => $change_return, 'row_index' => 'change_return'])
-					</div>
+					</div> --}}
 					<hr>
 					<div class="row">
 						<div class="col-sm-12">
