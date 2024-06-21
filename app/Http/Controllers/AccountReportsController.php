@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Account;
-
-use App\AccountTransaction;
-use App\AccountType;
-use App\TransactionPayment;
-use App\Utils\TransactionUtil;
 use DB;
-use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
+
+use App\Account;
+use App\AccountType;
+use App\Transaction;
+use App\ExpenseCategory;
 use App\BusinessLocation;
+use App\AccountTransaction;
+use App\TransactionPayment;
+use Illuminate\Http\Request;
+use App\Utils\TransactionUtil;
+use Yajra\DataTables\Facades\DataTables;
 
 class AccountReportsController extends Controller
 {
@@ -216,15 +218,15 @@ class AccountReportsController extends Controller
                                 ->get()
                                 ->pluck('balance', 'name');
 
-        $fixedAssetsExpenses = $this->getFixedAssetsExpenses($business_id, $end_date);
+        // $fixedAssetsExpenses = $this->getFixedAssetsExpenses($business_id, $end_date);
 
-        $fixedAssetsExpenseByCategory = $fixedAssetsExpenses->groupBy('name')->map(function ($group) {
-            return $group->sum('final_total');
-        });
+        // $fixedAssetsExpenseByCategory = $fixedAssetsExpenses->groupBy('name')->map(function ($group) {
+        //     return $group->sum('final_total');
+        // });
 
-        $totalExpense = $fixedAssetsExpenseByCategory->sum();
+        // $totalExpense = $fixedAssetsExpenseByCategory->sum();
 
-        $account_details = $account_details->merge($fixedAssetsExpenseByCategory->toArray());
+        // $account_details = $account_details->merge($fixedAssetsExpenseByCategory->toArray());
 
         $revenue = (float) ($account_details['Sales'] ?? 0);
         $expenses = (float) ($account_details['Expense'] ?? 0);
@@ -232,12 +234,12 @@ class AccountReportsController extends Controller
         // Calculate profit
         $grossprofit = abs($revenue) - $Purchase;
         // Calculate retained earnings
-        if ($expenses != 0 && $revenue != 0) {
-            $retained_earnings =  $expenses - $grossprofit;
-            if ($retained_earnings != 0) {
-                $account_details = $account_details->merge(['Retained Earnings' => $retained_earnings]);
-            }
+        $retained_earnings =  $expenses - $grossprofit;
+        if ($retained_earnings != 0) {
+            $account_details = $account_details->merge(['Retained Earnings' => $retained_earnings]);
         }
+        // if ($expenses != 0 && $revenue != 0) {
+        // }
 
         return $account_details;
         // if ($account_type == 'others') {
@@ -333,26 +335,6 @@ class AccountReportsController extends Controller
             ->groupBy('accounts.id')
             ->get()
             ->pluck('balance', 'name');
-        
-        $fixedAssetsExpenses = $this->getFixedAssetsExpenses($business_id, $end_date);
-
-        $fixedAssetsExpenseByCategory = $fixedAssetsExpenses->groupBy('name')->map(function ($group) {
-            return $group->sum('final_total');
-        });
-
-        $account_details = $account_details->merge($fixedAssetsExpenseByCategory->toArray());
-
-        $expense = $query->select([
-            'name',
-            DB::raw("SUM( IF(accounts.name = 'Expense' AND T.expense_category_id NOT IN (" . implode(",", $expenseCatIds) . "), IF(AT.type='credit', amount, -1*amount), 0) ) as balance")
-        ])
-            ->where('accounts.name', 'Expense')
-            ->groupBy('accounts.id')
-            ->get()
-            ->pluck('balance', 'name');
-
-        // Merge $expense into $account_details
-        $account_details = $account_details->merge($expense);
 
         return $account_details;
         // if ($account_type == 'others') {
@@ -401,7 +383,7 @@ class AccountReportsController extends Controller
                     'c.type as contact_type',
                     'transaction_payments.is_advance',
                     'transaction_payments.amount'
-                ]);
+                ])
                 ->leftjoin('accounts as A', 'transaction_payments.account_id', '=', 'A.id')
                 ->where('transaction_payments.business_id', $business_id)
                 ->whereNull('transaction_payments.parent_id')

@@ -240,6 +240,9 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     //Expenses...
     Route::resource('expenses', 'ExpenseController');
 
+    // Fixed Assets...
+    Route::resource('fixed-assets', 'FixedAssetController');
+
     //Transaction payments...
     // Route::get('/payments/opening-balance/{contact_id}', 'TransactionPaymentController@getOpeningBalancePayments');
     Route::get('/payments/show-child-payments/{payment_id}', 'TransactionPaymentController@showChildPayments');

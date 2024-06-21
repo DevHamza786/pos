@@ -1209,7 +1209,6 @@ class AccountController extends Controller
         if (!empty($row->added_by)) {
             $details .= '<br><b>' . __('lang_v1.added_by') . ':</b> ' . $row->added_by;
         }
-
         return $details;
     }
 

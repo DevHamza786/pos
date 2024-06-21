@@ -37,6 +37,7 @@ class AddAccountTransaction
      */
     public function handle(TransactionPaymentAdded $event)
     {
+        // dd($event);
         // echo "<pre>";
         // print_r($event->transactionPayment->toArray());
         // exit;
@@ -150,7 +151,7 @@ class AddAccountTransaction
                     $account_transaction_data = [
                         'amount' => $event->total_sell - $event->formInput['amount'],
                         'account_id' => $expensePayable->id,
-                        'type' => 'credit',
+                        'type' => 'debit',
                         'operation_date' => $event->transactionPayment->paid_on,
                         'created_by' => $event->transactionPayment->created_by,
                         'transaction_id' => $event->transactionPayment->transaction_id,
@@ -169,6 +170,65 @@ class AddAccountTransaction
                         'amount' => $event->formInput['amount'],
                         'account_id' => $expensePayable->id,
                         'type' => 'debit',
+                        'operation_date' => $event->transactionPayment->paid_on,
+                        'created_by' => $event->transactionPayment->created_by,
+                        'transaction_id' => $event->transactionPayment->transaction_id,
+                        'transaction_payment_id' =>  $event->transactionPayment->id
+                    ];
+                    AccountTransaction::createAccountTransaction($account_transaction_data);
+
+                }
+            }
+
+            // For Fixed Asset
+            if($event->formInput['transaction_type'] == 'investment'){
+                $payment_status = $this->transactionUtil->updatePaymentStatus($event->transactionPayment->transaction_id, $event->total_sell);
+                $fixedassetTransaction = Account::select('id', 'name')->where('name', 'like', '%Fixed Assets%')
+                ->whereHas('account_type', function ($query) {
+                    $query->where('name', 'like', '%Fixed Assets%');
+                })
+                ->first();
+                if($event->total_sell != null){
+                    $account_transaction_data = [
+                        'amount' => ($payment_status == 'partial') ? $event->total_sell : $event->formInput['amount'],
+                        'account_id' => $fixedassetTransaction->id,
+                        'type' => 'credit',
+                        'operation_date' => $event->transactionPayment->paid_on,
+                        'created_by' => $event->transactionPayment->created_by,
+                        'transaction_id' => $event->transactionPayment->transaction_id,
+                        'transaction_payment_id' =>  $event->transactionPayment->id
+                    ];
+                    AccountTransaction::createAccountTransaction($account_transaction_data);
+                }
+
+                if($payment_status == 'partial'){
+                    $investmentPayable = Account::select('id', 'name')->where('name', 'like', '%Payable%')
+                    ->whereHas('account_type', function ($query) {
+                        $query->where('name', 'like', '%LIABILITIES%');
+                    })
+                    ->first();
+                    $account_transaction_data = [
+                        'amount' => $event->total_sell - $event->formInput['amount'],
+                        'account_id' => $investmentPayable->id,
+                        'type' => 'debit',
+                        'operation_date' => $event->transactionPayment->paid_on,
+                        'created_by' => $event->transactionPayment->created_by,
+                        'transaction_id' => $event->transactionPayment->transaction_id,
+                        'transaction_payment_id' =>  $event->transactionPayment->id
+                    ];
+                    AccountTransaction::createAccountTransaction($account_transaction_data);
+
+                }elseif($payment_status == 'paid' && $event->total_sell == null){
+                    $investmentPayable = Account::select('id', 'name')->where('name', 'like', '%Payable%')
+                    ->whereHas('account_type', function ($query) {
+                        $query->where('name', 'like', '%LIABILITIES%');
+                    })
+                    ->first();
+
+                    $account_transaction_data = [
+                        'amount' => $event->formInput['amount'],
+                        'account_id' => $investmentPayable->id,
+                        'type' => 'credit',
                         'operation_date' => $event->transactionPayment->paid_on,
                         'created_by' => $event->transactionPayment->created_by,
                         'transaction_id' => $event->transactionPayment->transaction_id,

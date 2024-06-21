@@ -47,7 +47,8 @@ class AccountTransaction extends Model
             'purchase_return' => 'credit',
             'sell_return' => 'debit',
             'payroll' => 'debit',
-            'expense_refund' => 'credit'
+            'expense_refund' => 'credit',
+            'investment' => 'debit',
         ];
 
         return $account_transaction_types[$tansaction_type];

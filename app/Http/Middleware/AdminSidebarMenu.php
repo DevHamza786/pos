@@ -226,6 +226,12 @@ class AdminSidebarMenu
                                 ['icon' => 'fa fas fa-undo', 'active' => request()->segment(1) == 'purchase-return']
                             );
                         }
+
+                        $sub->url(
+                            action('FixedAssetController@index'),
+                            __('Fixed Assets'),
+                            ['icon' => 'fa fas fa-list', 'active' => request()->segment(1) == 'expenses' && request()->segment(2) == null ]
+                        );
                     },
                     ['icon' => 'fa fas fa-arrow-circle-down', 'id' => 'tour_step6']
                 )->order(25);
@@ -583,13 +589,6 @@ class AdminSidebarMenu
                                 action('ReportController@sellPaymentReport'),
                                 __('lang_v1.sell_payment_report'),
                                 ['icon' => 'fa fas fa-search-dollar', 'active' => request()->segment(2) == 'sell-payment-report']
-                            );
-                        }
-                        if (in_array('expenses', $enabled_modules) && auth()->user()->can('expense_report.view')) {
-                            $sub->url(
-                                action('ReportController@getAssetsReport'),
-                                __('Fixed Assets Report'),
-                                ['icon' => 'fa fas fa-search-minus', 'active' => request()->segment(2) == 'fixed-assets-report']
                             );
                         }
                         if (in_array('expenses', $enabled_modules) && auth()->user()->can('expense_report.view')) {
